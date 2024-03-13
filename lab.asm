@@ -3,8 +3,9 @@
 .data
     iterations db 3; declare how many numbers we want to enter
     oneChar db 00h; declare oneChar as a byte variable
-    numbers dw 5 dup(0) ; declare array as a word variable   
+    numbers dw 45 dup(2) ; declare array as a word variable   
     prompt db "Enter a number: $"
+    index dw 0
 
 .code 
     main PROC
@@ -19,8 +20,6 @@
             int 21h
 
             ;code that reads a character from console
-            ;mov ah, 01h
-            ;int 21h
             mov ah, 3Fh
             mov bx, 0h  ; stdin handle
             mov cx, 1   ; 1 byte to read ;TODO
@@ -31,6 +30,19 @@
             mov ah, 02h 
             mov dl, oneChar ;reads the ASCII code from dl register
             int 21h
+
+            sub oneChar, '0'
+
+            mov ax, [index]
+            mov bx, 2
+            mul bx
+
+            mov bx, ax
+
+            mov al, [oneChar]
+            mov ah, 0 ; clear ah to make sure ax contains the correct value
+            mov [numbers + bx], ax
+            inc [index] ;next position in the array
 
             ;ВІДСТУП
             ;code that outputs a newline to console
