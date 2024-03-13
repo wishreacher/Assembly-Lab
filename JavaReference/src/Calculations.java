@@ -31,7 +31,10 @@ public class Calculations {
             }
             numbers[i] = number;
         }
+        bubbleSort(numbers);
         convertToBinary(numbers);
+        System.out.println("Медіана: " + median(numbers));
+        System.out.println("Середнє значення: " + average(numbers));
     }
 
     public static void convertToBinary(short[] numbers){
@@ -46,5 +49,33 @@ public class Calculations {
             binary.append((value >> i) & 1);
         }
         return binary.toString();
+    }
+
+    public static void bubbleSort(short[] numbers){
+        for(int i = 0; i < numbers.length; i++){
+            for(int j = 0; j < numbers.length - i - 1; j++){
+                if(numbers[j] > numbers[j + 1]){
+                    short temp = numbers[j];
+                    numbers[j] = numbers[j + 1];
+                    numbers[j + 1] = temp;
+                }
+            }
+        }
+    }
+
+    public static double median(short[] numbers){
+        if(numbers.length % 2 == 0){
+            return (numbers[numbers.length / 2] + numbers[numbers.length / 2 - 1]) / 2.0;
+        } else {
+            return numbers[numbers.length / 2];
+        }
+    }
+
+    public static double average(short[] numbers){
+        double sum = 0;
+        for(int i = 0; i < numbers.length; i++){
+            sum += numbers[i];
+        }
+        return sum / numbers.length;
     }
 }
