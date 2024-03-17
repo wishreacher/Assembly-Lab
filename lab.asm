@@ -1,63 +1,77 @@
 .model small
 
+.stack 100h
+
 .data
     iterations db 3; declare how many numbers we want to enter
     oneChar db 00h; declare oneChar as a byte variable
     numbers dw 45 dup(2) ; declare array as a word variable   
     prompt db "Enter a number: $"
     index dw 0
+    counter db 0
+    power dw 0
 
+;читає символи по одному поки не зустрінемо символ пробілу чи рядка
+;коли зустріли пробіл чи переривання рядка - записали в масив, опрацювали що там треба
+;
 .code 
     main PROC
         mov ax, @data
         mov ds, ax
 
-        mov cl, iterations ; set the counter to the number of iterations
-        inputloop:
-            ;code that outputs a prompt to console
-            mov ah, 09h
-            lea dx, prompt
-            int 21h
-
+        input:
             ;code that reads a character from console
             mov ah, 3Fh
             mov bx, 0h  ; stdin handle
-            mov cx, 1   ; 1 byte to read ;TODO
+            mov cx, 1   ; 1 byte to read
             mov dx, offset oneChar   ; read to ds:dx 
             int 21h
 
-            ;code that outputs a symbol to console
-            mov ah, 02h 
-            mov dl, oneChar ;reads the ASCII code from dl register
-            int 21h
+            cmp oneChar, 0Ah ; перевірка на переривання рядка
+            je popCharacters
+            cmp oneChar, 0Dh ; перевірка на переривання рядка
+            je popCharacters
+            cmp oneChar, 20h ; перевірка на пробіл
+            je popCharacters
 
-            sub oneChar, '0'
+            push dx; 
+            inc counter
 
-            mov ax, [index]
-            mov bx, 2
-            mul bx
+            or ax,ax ; якщо тут більше нічого немає, ввід закінчився
+            jnz input
+            ;TODO оцінити чи буде проблема якшо звідси код піде просто вниз
 
-            mov bx, ax
+        popCharacters:
+            mov cl, counter ; load the value of counter into cl
+            xor ax, ax ; clear ax to store the final number
+            xor dx, dx ; clear dx to store the final number
 
-            mov al, [oneChar]
-            mov ah, 0 ; clear ah to make sure ax contains the correct value
-            mov [numbers + bx], ax
-            inc [index] ;next position in the array
+            popLoop:
+                pop dx ; pop a value from the stack into dx
+                sub dl, '0' ; convert from ASCII to integer
+                mov bh, 0 ; clear bh for multiplication
 
-            ;ВІДСТУП
-            ;code that outputs a newline to console
-            mov ah, 02h 
-            mov dl, 0Ah ; ASCII code for newline
-            int 21h
 
-            ;code that outputs a carriage return to console
-            mov ah, 02h 
-            mov dl, 0Dh ; ASCII code for carriage return
-            int 21h
+                call powerOfTen ; multiply ax by 10 to the power of cx
+                add dx, ax
 
-            dec [iterations]
-            mov cl, iterations
-            jnz inputloop
+                add al, dl ; add the new digit
+                aam ; adjust after multiply
+                inc power
+
+                loop popLoop ; decrement cx and continue looping if cx is not zero
+
+            mov counter, 0
+
+
+        powerOfTen:
+        mov cx, [power] ; load the power into cx
+        xor ax, ax ; clear ax to store the final number
+        mov bl, 10 ; base 10 for multiplication
+        powerLoop:
+            mul bl ; multiply ax by 10
+            loop powerLoop ; decrement cx and continue looping if cx is not zero
+        ret ; return to the caller
     main ENDP
     end main
 .bss 
