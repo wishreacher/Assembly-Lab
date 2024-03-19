@@ -3,75 +3,115 @@
 .stack 100h
 
 .data
-    iterations db 3; declare how many numbers we want to enter
-    oneChar db 00h; declare oneChar as a byte variable
-    numbers dw 45 dup(2) ; declare array as a word variable   
-    prompt db "Enter a number: $"
-    index dw 0
+    oneCharBuffer db 00h; declare oneCharBuffer as a byte variable
+    numbers dw 45 dup(2) ; declare array as a word variable
+    arrayIndex dw 0
     counter db 0
     power dw 0
+    inputBuffer dw 0
+    isSpace db 0
 
 ;читає символи по одному поки не зустрінемо символ пробілу чи рядка
 ;коли зустріли пробіл чи переривання рядка - записали в масив, опрацювали що там треба
-;
 .code 
     main PROC
         mov ax, @data
         mov ds, ax
 
-        input:
+        input:    
             ;code that reads a character from console
             mov ah, 3Fh
             mov bx, 0h  ; stdin handle
             mov cx, 1   ; 1 byte to read
-            mov dx, offset oneChar   ; read to ds:dx 
+            mov dx, offset oneCharBuffer   ; read to ds:dx 
             int 21h
 
-            cmp oneChar, 0Ah ; перевірка на переривання рядка
+            mov inputBuffer, ax
+
+            mov ah, 02h
+            mov dl, oneCharBuffer
+            int 21h
+
+            cmp oneCharBuffer, 0Ah ; перевірка на переривання рядка
             je popCharacters
-            cmp oneChar, 0Dh ; перевірка на переривання рядка
+            cmp oneCharBuffer, 0Dh ; перевірка на переривання рядка
             je popCharacters
-            cmp oneChar, 20h ; перевірка на пробіл
+            cmp oneCharBuffer, 20h ; перевірка на пробіл
             je popCharacters
 
-            push dx; 
-            inc counter
+            mov isSpace, 0
 
-            or ax,ax ; якщо тут більше нічого немає, ввід закінчився
+            push dx ; if not a space, push the character onto the stack
+            inc counter ; increment the counter
+
+            ;TODO this condition check ax, but ax is used in the other place
+        inputEnd:
+            mov ax, inputBuffer
+            or ax, ax ; if there's nothing left, the input has ended
             jnz input
-            ;TODO оцінити чи буде проблема якшо звідси код піде просто вниз
+
+            cmp counter, 0 ; check if there's a number that hasn't been processed
+            je calculations
+
+            jmp popCharacters ; if there's a number left, process it
 
         popCharacters:
-            mov cl, counter ; load the value of counter into cl
-            xor ax, ax ; clear ax to store the final number
-            xor dx, dx ; clear dx to store the final number
+            ; at this point we expect a number stored in the stack in reverse 
+            ; order, 1234 - 4321
+            inc isSpace
+            cmp isSpace, 2
+            je calculations
+             
+            mov cl, counter ; number of digits
+            xor ax, ax 
+            xor dx, dx
 
-            popLoop:
-                pop dx ; pop a value from the stack into dx
-                sub dl, '0' ; convert from ASCII to integer
-                mov bh, 0 ; clear bh for multiplication
+        popLoop:
+            pop ax ; pop a value from the stack into dx
+            sub ax, '0' ; convert from ASCII to integer
 
+            push cx ; save cx
+            push dx ; save dx
+            call powerOfTen ; multiply ax by 10 to the power of cx
+            pop dx ; restore dx
+            pop cx ; restore cx
 
-                call powerOfTen ; multiply ax by 10 to the power of cx
-                add dx, ax
+            add dx, ax
 
-                add al, dl ; add the new digit
-                aam ; adjust after multiply
-                inc power
+            inc power
 
-                loop popLoop ; decrement cx and continue looping if cx is not zero
+            loop popLoop ; decrement cx and continue looping if cx is not zero
 
             mov counter, 0
+            mov power, 0
 
+            lea bx, [numbers]
+            add bx, arrayIndex
+            mov [bx], dx ; store the number in the array
+            inc arrayIndex ; increment the arrayIndex twice because we are storing a word
+            inc arrayIndex ; TODO this can be done with one instruction
+
+            jmp inputEnd
 
         powerOfTen:
         mov cx, [power] ; load the power into cx
-        xor ax, ax ; clear ax to store the final number
-        mov bl, 10 ; base 10 for multiplication
+        mov bx, 10 ; base 10 for multiplication
+
+        cmp cx, 0 ; if the power is 0, we don't need to do anything
+        je endPowerOfTen ; jump to endPowerOfTen if cx is zero
+
         powerLoop:
-            mul bl ; multiply ax by 10
+            mul bx ; multiply ax by 10
             loop powerLoop ; decrement cx and continue looping if cx is not zero
+
+        endPowerOfTen:
         ret ; return to the caller
+
+        calculations:
+        mov ah, 02h
+        mov dl, "g"
+        int 21h
+
     main ENDP
     end main
 .bss 
