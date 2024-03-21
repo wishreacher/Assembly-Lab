@@ -18,7 +18,43 @@
         mov ax, @data
         mov ds, ax
 
-        input:    
+        call input
+
+        calculations:
+        mov ah, 02h
+        mov dl, "g"
+        int 21h
+
+    main ENDP
+    
+    addToArray proc
+        lea bx, [numbers]
+        add bx, arrayIndex
+        mov [bx], dx ; store the number in the array
+        inc arrayIndex ; increment the arrayIndex twice because we are storing a word
+        inc arrayIndex ; TODO this can be done with one instruction
+        ret
+    addToArray endp
+
+    
+    powerOfTen PROC
+        powerOfTen:
+        mov cx, [power] ; load the power into cx
+        mov bx, 10 ; base 10 for multiplication
+
+        cmp cx, 0 ; if the power is 0, we don't need to do anything
+        je endPowerOfTen ; jump to endPowerOfTen if cx is zero
+
+        powerLoop:
+            mul bx ; multiply ax by 10
+            loop powerLoop ; decrement cx and continue looping if cx is not zero
+
+        endPowerOfTen:
+        ret ; return to the caller
+    powerOfTen ENDP
+
+    input PROC
+        inputStart:    
             ;code that reads a character from console
             mov ah, 3Fh
             mov bx, 0h  ; stdin handle
@@ -48,7 +84,7 @@
         inputEnd:
             mov ax, inputBuffer
             or ax, ax ; if there's nothing left, the input has ended
-            jnz input
+            jnz inputStart
 
             cmp counter, 0 ; check if there's a number that hasn't been processed
             je calculations
@@ -85,34 +121,12 @@
             mov counter, 0
             mov power, 0
 
-            lea bx, [numbers]
-            add bx, arrayIndex
-            mov [bx], dx ; store the number in the array
-            inc arrayIndex ; increment the arrayIndex twice because we are storing a word
-            inc arrayIndex ; TODO this can be done with one instruction
+            call addToArray
 
             jmp inputEnd
+            ret ;!!
+    input ENDP
 
-        powerOfTen:
-        mov cx, [power] ; load the power into cx
-        mov bx, 10 ; base 10 for multiplication
-
-        cmp cx, 0 ; if the power is 0, we don't need to do anything
-        je endPowerOfTen ; jump to endPowerOfTen if cx is zero
-
-        powerLoop:
-            mul bx ; multiply ax by 10
-            loop powerLoop ; decrement cx and continue looping if cx is not zero
-
-        endPowerOfTen:
-        ret ; return to the caller
-
-        calculations:
-        mov ah, 02h
-        mov dl, "g"
-        int 21h
-
-    main ENDP
     end main
 .bss 
     
