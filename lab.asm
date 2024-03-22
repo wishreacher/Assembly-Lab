@@ -10,6 +10,7 @@
     power dw 0
     inputBuffer dw 0
     isSpace db 0
+    sum dd 0
 
 ;читає символи по одному поки не зустрінемо символ пробілу чи рядка
 ;коли зустріли пробіл чи переривання рядка - записали в масив, опрацювали що там треба
@@ -122,6 +123,7 @@
             mov power, 0
 
             call addToArray
+            add sum, dx
 
             jmp inputEnd
             ret ;!!
