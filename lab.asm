@@ -10,7 +10,8 @@
     power dw 0
     inputBuffer dw 0
     isSpace db 0
-    sum dd 0
+    sumLow dw 0; Add dx to the low part of the sum
+    sumHigh dw 0; Add dx to the high part of the sum
 
 ;читає символи по одному поки не зустрінемо символ пробілу чи рядка
 ;коли зустріли пробіл чи переривання рядка - записали в масив, опрацювали що там треба
@@ -123,7 +124,8 @@
             mov power, 0
 
             call addToArray
-            add sum, dx
+            add sumLow, dx ; Add dx to the low part of the sum
+            adc sumHigh, 0 ; Add with carry to the high part of the sum
 
             jmp inputEnd
             ret ;!!
