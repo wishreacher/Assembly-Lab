@@ -3,13 +3,14 @@
 .stack 100h
 
 .data
-    oneCharBuffer db 00h; declare oneCharBuffer as a byte variable
+    oneCharBuffer db 0; declare oneCharBuffer as a byte variable
     numbers dw 45 dup(2) ; declare array as a word variable
     arrayIndex dw 0
     counter db 0
     power dw 0
     inputBuffer dw 0
     isSpace db 0
+    isNegative db 0
     sumLow dw 0; Add dx to the low part of the sum
     sumHigh dw 0; Add dx to the high part of the sum
 
@@ -70,6 +71,12 @@
             mov dl, oneCharBuffer
             int 21h
 
+            cmp oneCharBuffer, '-' ; check if the character is a minus sign
+            jne spaceChecks ; if it is, jump to negativeNumber
+            mov isNegative, 1 ; set the flag to indicate that the number is negative
+            jmp inputStart ; jump to inputStart
+
+        spaceChecks:
             cmp oneCharBuffer, 0Ah ; перевірка на переривання рядка
             je popCharacters
             cmp oneCharBuffer, 0Dh ; перевірка на переривання рядка
@@ -82,7 +89,6 @@
             push dx ; if not a space, push the character onto the stack
             inc counter ; increment the counter
 
-            ;TODO this condition check ax, but ax is used in the other place
         inputEnd:
             mov ax, inputBuffer
             or ax, ax ; if there's nothing left, the input has ended
@@ -98,8 +104,10 @@
             ; order, 1234 - 4321
             inc isSpace
             cmp isSpace, 2
-            je calculations
-             
+            jne popLoopStart
+            jmp calculations
+
+        popLoopStart: 
             mov cl, counter ; number of digits
             xor ax, ax 
             xor dx, dx
@@ -120,12 +128,21 @@
 
             loop popLoop ; decrement cx and continue looping if cx is not zero
 
+        popLoopEnd:
             mov counter, 0
             mov power, 0
 
+            cmp isNegative, 1 ; check if the number is negative
+            jne sum ; if it is not, jump to sum
+            neg dx
+
+        sum:
             call addToArray
             add sumLow, dx ; Add dx to the low part of the sum
             adc sumHigh, 0 ; Add with carry to the high part of the sum
+
+            mov dx, 0 ; clear dx
+            mov isNegative, 0 ; clear the negative flag
 
             jmp inputEnd
             ret ;!!
