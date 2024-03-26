@@ -4,7 +4,7 @@
 
 .data
     oneCharBuffer db 0; declare oneCharBuffer as a byte variable
-    numbers dw 1000 dup(2) ; declare array as a word variable
+    numbers dw 700 dup(2) ; declare array as a word variable
     arrayIndex dw 0
     counter db 0
     power dw 0
@@ -23,10 +23,7 @@
 
         call input
 
-        calculations:
-        mov ah, 02h
-        mov dl, "g"
-        int 21h
+        call calculation
 
     main ENDP
     
@@ -38,7 +35,6 @@
         inc arrayIndex ; TODO this can be done with one instruction
         ret
     addToArray endp
-
     
     powerOfTen PROC
         powerOfTen:
@@ -65,6 +61,9 @@
             mov dx, offset oneCharBuffer   ; read to ds:dx 
             int 21h
 
+            or ax, ax
+            jz testicleCancer
+
             mov inputBuffer, ax
 
             mov ah, 02h
@@ -88,6 +87,10 @@
 
             push dx ; if not a space, push the character onto the stack
             inc counter ; increment the counter
+            jmp inputEnd
+
+        testicleCancer:
+            jmp popCharacters
 
         inputEnd:
             mov ax, inputBuffer
@@ -95,8 +98,10 @@
             jnz inputStart
 
             cmp counter, 0 ; check if there's a number that hasn't been processed
-            je calculations
+            jne pcJump
+            jmp calculationStart
 
+        pcJump:
             jmp popCharacters ; if there's a number left, process it
 
         popCharacters:
@@ -105,7 +110,7 @@
             inc isSpace
             cmp isSpace, 2
             jne popLoopStart
-            jmp calculations
+            jmp calculationStart
 
         popLoopStart: 
             mov cl, counter ; number of digits
@@ -158,6 +163,14 @@
         endFloor:
         ret
     floor endp
+
+    calculation proc
+        calculationStart:
+            mov ah, 02h
+            mov dl, "g"
+            int 21h
+            ret
+    calculation endp
 
     end main
 .bss 
