@@ -4,7 +4,7 @@
 
 .data
     oneCharBuffer db 0; declare oneCharBuffer as a byte variable
-    numbers dw 700 dup(2) ; declare array as a word variable
+    numbers dw 100 dup(2) ; declare array as a word variable
     arrayIndex dw 0
     counter db 0
     power dw 0
@@ -13,6 +13,7 @@
     isNegative db 0
     sumLow dw 0; Add dx to the low part of the sum
     sumHigh dw 0; Add dx to the high part of the sum
+    totalWords dw 0
 
 ;читає символи по одному поки не зустрінемо символ пробілу чи рядка
 ;коли зустріли пробіл чи переривання рядка - записали в масив, опрацювали що там треба
@@ -22,7 +23,7 @@
         mov ds, ax
 
         call input
-
+        call bubbleSort
         call calculation
 
     main ENDP
@@ -33,6 +34,7 @@
         mov [bx], dx ; store the number in the array
         inc arrayIndex ; increment the arrayIndex twice because we are storing a word
         inc arrayIndex ; TODO this can be done with one instruction
+        inc totalWords
         ret
     addToArray endp
     
@@ -163,6 +165,39 @@
         endFloor:
         ret
     floor endp
+
+    bubbleSort proc
+        call clearAllRegisters
+
+        mov cx, totalWords
+        dec cx
+
+        outerLoop:
+            push cx
+            lea si, numbers
+        innerLoop:
+            mov ax, [si]
+            cmp ax, [si+2]
+            jl nextStep
+            xchg [si+2], ax
+            mov [si], ax
+        nextStep:
+            add si, 2
+            loop innerLoop
+            pop cx
+            loop outerLoop
+
+        ret
+    bubbleSort endp
+
+    clearAllRegisters proc
+        xor ax, ax
+        xor bx, bx
+        xor cx, cx
+        xor dx, dx
+
+        ret
+    clearAllRegisters endp
 
     calculation proc
         calculationStart:
