@@ -4,7 +4,7 @@
 
 .data
     oneCharBuffer db 0; declare oneCharBuffer as a byte variable
-    numbers dw 45 dup(2) ; declare array as a word variable
+    numbers dw 1000 dup(2) ; declare array as a word variable
     arrayIndex dw 0
     counter db 0
     power dw 0
@@ -132,6 +132,8 @@
             mov counter, 0
             mov power, 0
 
+            call floor
+
             cmp isNegative, 1 ; check if the number is negative
             jne sum ; if it is not, jump to sum
             neg dx
@@ -147,6 +149,15 @@
             jmp inputEnd
             ret ;!!
     input ENDP
+
+    floor proc
+        cmp dx, 32767
+        jno endFloor
+        mov dx, 32767
+        
+        endFloor:
+        ret
+    floor endp
 
     end main
 .bss 
