@@ -4,7 +4,7 @@
 
 .data
     oneCharBuffer db 0; declare oneCharBuffer as a byte variable
-    numbers dw 100 dup(2) ; declare array as a word variable
+    numbers dw 10 dup(2) ; declare array as a word variable
     arrayIndex dw 0
     counter db 0
     power dw 0
@@ -24,7 +24,7 @@
 
         call input
         call bubbleSort
-        call calculation
+        call printMedian
 
     main ENDP
     
@@ -195,7 +195,7 @@
         xor bx, bx
         xor cx, cx
         xor dx, dx
-
+        xor si, si
         ret
     clearAllRegisters endp
 
@@ -206,6 +206,40 @@
             int 21h
             ret
     calculation endp
+
+    printMedian proc
+        call clearAllRegisters
+
+        ;divide by two with right shift
+        mov bx, totalWords
+        mov ax, bx
+        and ax, 1
+        jz evenAmount
+        jnz oddAmount
+
+        evenAmount:
+        shr bx, 1
+        lea si, numbers
+
+        mov dx, [si+bx]
+        add dx, [si+bx-2]
+
+        jmp medianEnd
+
+        oddAmount:
+        shr bx, 1
+        inc bx
+
+        lea si, numbers ; address of the array
+        mov dx, [si+bx] ; load the median into ax
+
+        medianEnd:
+        add dx, "0"
+        mov ah, 02h
+        int 21h
+
+        ret
+    printMedian endp
 
     end main
 .bss 
