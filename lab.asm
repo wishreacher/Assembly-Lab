@@ -24,7 +24,7 @@
 
         call input
         call bubbleSort
-        call calculateMedian
+        ;call calculateMedian
         call calculateAverage
 
     main ENDP
@@ -207,9 +207,6 @@
 
     calculation proc
         calculationStart:
-            mov ah, 02h
-            mov dl, "g"
-            int 21h
             ret
     calculation endp
 
@@ -237,13 +234,10 @@
         inc bx
 
         lea si, numbers ; address of the array
-        mov dx, [si+bx] ; load the median into ax
+        mov dx, [si+bx] ; load the median into dx
 
         medianEnd:
-        add dx, "0"
-        mov ah, 02h
-        int 21h
-
+        call convertAss
         ret
     calculateMedian endp
 
@@ -258,11 +252,47 @@
         idiv bx
         mov dx, ax
 
-        mov ax, 02h
-        int 21h
+        call convertAss
 
         ret
     calculateAverage endp
+
+    convertAss PROC
+        minusCheck:
+            xor cx, cx
+
+            test dx, 8000h ; check if the number is negative   
+            jz conversion
+
+            neg dx
+            push '-'
+            inc cx
+
+        conversion:
+            mov ax, dx
+            xor dx, dx
+            mov bx, 10 ; constant for division
+
+            div bx
+            add dx, '0' ; convert to ASCII
+            push dx
+            inc cx
+            test ax, ax
+            jne conversion
+
+            jmp printLoop
+        ret
+    convertAss ENDP
+
+    printAss PROC
+        printLoop:
+            xor dx, dx
+            pop dx
+            mov ah, 02h
+            int 21h
+            loop printLoop
+        ret
+    printAss ENDP
 
     end main
 .bss 
