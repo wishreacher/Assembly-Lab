@@ -22,10 +22,12 @@
         mov ax, @data
         mov ds, ax
 
-        call input
-        call bubbleSort
+        mov ax, 455
+        call StdoutDecimal
+        ;call input
+        ;call bubbleSort
         ;call calculateMedian
-        call calculateAverage
+        ;call calculateAverage
 
     main ENDP
     
@@ -293,6 +295,52 @@
             loop printLoop
         ret
     printAss ENDP
+StdoutDecimal proc
+    push ax                                  
+    push bx                                  
+    push cx                                  
+    push dx                                  
+
+    test ax, ax
+    jns notNegative
+
+    neg ax
+
+    push ax
+    push dx
+
+    mov ah, 02h
+    mov dl, '-'
+    int 21h
+
+    pop dx 
+    pop ax
+
+notNegative:
+    mov bx, 10                               ; Дільник для перетворення у десятковий формат
+    mov cx, 0                                ; CX буде рахувати кількість цифр
+
+divide:
+    xor dx, dx                               ; Очищення DX для DIV
+    div bx                                   ; Ділення AX на BX
+    push dx                                  ; Запис залишку (цифри) у стек
+    inc cx                                   ; Збільшуємо каунтер цифр на 1 
+    test ax, ax                              ; Перевірка чи результат ділення 0
+    jnz divide                               ; Якщо ні, продовжуємо ділення
+
+print_digit:
+    pop dx                                   ; Дістаємо цифру зі стеку
+    add dl, '0'                              ; Конвертація у ASCII
+    mov ah, 02h                              ; Код функції stdout
+    int 21h                                  ; Виклик DOS переривання
+    loop print_digit                         ; Повторення поки всі цифри не будуть надруковані
+
+    pop dx                                   ; Відновлення регістрів
+    pop cx
+    pop bx
+    pop ax
+    ret                                      ; Повернення з підпрограми
+StdoutDecimal endp
 
     end main
 .bss 
