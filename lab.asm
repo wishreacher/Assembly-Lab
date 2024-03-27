@@ -3,65 +3,46 @@
 .stack 100h
 
 .data
-    oneCharBuffer db 0; declare oneCharBuffer as a byte variable
-    numbers dw 10 dup(2) ; declare array as a word variable
+    oneCharBuffer db 0                         ; declare oneCharBuffer as a byte variable
+    numbers dw 10 dup(2)                       ; declare array as a word variable
     arrayIndex dw 0
     counter db 0
     power dw 0
     inputBuffer dw 0
     isSpace db 0
     isNegative db 0
-    sumLow dw 0; Add dx to the low part of the sum
-    sumHigh dw 0; Add dx to the high part of the sum
+    sumLow dw 0                                ; Add dx to the low part of the sum
+    sumHigh dw 0                               ; Add dx to the high part of the sum
     totalWords dw 0
 
-;читає символи по одному поки не зустрінемо символ пробілу чи рядка
-;коли зустріли пробіл чи переривання рядка - записали в масив, опрацювали що там треба
 .code 
     main PROC
         mov ax, @data
         mov ds, ax
 
         call input
+        
         call bubbleSort
-        ;call calculateMedian
+
+        call skipLine
+
+        call calculateMedian
+
+        call skipLine
+
         call calculateAverage
 
     main ENDP
     
-    addToArray proc
-        lea bx, [numbers]
-        add bx, arrayIndex
-        mov [bx], dx ; store the number in the array
-        inc arrayIndex ; increment the arrayIndex twice because we are storing a word
-        inc arrayIndex ; TODO this can be done with one instruction
-        inc totalWords
-        ret
-    addToArray endp
-    
-    powerOfTen PROC
-        powerOfTen:
-        mov cx, [power] ; load the power into cx
-        mov bx, 10 ; base 10 for multiplication
-
-        cmp cx, 0 ; if the power is 0, we don't need to do anything
-        je endPowerOfTen ; jump to endPowerOfTen if cx is zero
-
-        powerLoop:
-            mul bx ; multiply ax by 10
-            loop powerLoop ; decrement cx and continue looping if cx is not zero
-
-        endPowerOfTen:
-        ret ; return to the caller
-    powerOfTen ENDP
-
+    ; we read symbols one by one. If we read a space, we set a corresponding flag and start reading the next number.
+    ; if we read a space ot a new line it means we reached the end of the number and we can start processing it
     input PROC
         inputStart:    
             ;code that reads a character from console
             mov ah, 3Fh
-            mov bx, 0h  ; stdin handle
-            mov cx, 1   ; 1 byte to read
-            mov dx, offset oneCharBuffer   ; read to ds:dx 
+            mov bx, 0h                      ; stdin handle
+            mov cx, 1                       ; 1 byte to read
+            mov dx, offset oneCharBuffer    ; read to ds:dx 
             int 21h
 
             or ax, ax
@@ -73,23 +54,23 @@
             mov dl, oneCharBuffer
             int 21h
 
-            cmp oneCharBuffer, '-' ; check if the character is a minus sign
-            jne spaceChecks ; if it is, jump to negativeNumber
-            mov isNegative, 1 ; set the flag to indicate that the number is negative
-            jmp inputStart ; jump to inputStart
+            cmp oneCharBuffer, '-'          ; check if the character is a minus sign
+            jne spaceChecks                 ; if it is, jump to negativeNumber
+            mov isNegative, 1               ; set the flag to indicate that the number is negative
+            jmp inputStart                  ; jump to inputStart
 
         spaceChecks:
-            cmp oneCharBuffer, 0Ah ; перевірка на переривання рядка
+            cmp oneCharBuffer, 0Ah          ; перевірка на переривання рядка
             je popCharacters
-            cmp oneCharBuffer, 0Dh ; перевірка на переривання рядка
+            cmp oneCharBuffer, 0Dh          ; перевірка на переривання рядка
             je popCharacters
-            cmp oneCharBuffer, 20h ; перевірка на пробіл
+            cmp oneCharBuffer, 20h          ; перевірка на пробіл
             je popCharacters
 
             mov isSpace, 0
 
-            push dx ; if not a space, push the character onto the stack
-            inc counter ; increment the counter
+            push dx                         ; if not a space, push the character onto the stack
+            inc counter                     ; increment the counter
             jmp inputEnd
 
         testicleCancer:
@@ -97,15 +78,15 @@
 
         inputEnd:
             mov ax, inputBuffer
-            or ax, ax ; if there's nothing left, the input has ended
+            or ax, ax                       ; if there's nothing left, the input has ended
             jnz inputStart
 
-            cmp counter, 0 ; check if there's a number that hasn't been processed
+            cmp counter, 0                  ; check if there's a number that hasn't been processed
             jne pcJump
-            jmp calculationStart
+            jmp popEnd
 
         pcJump:
-            jmp popCharacters ; if there's a number left, process it
+            jmp popCharacters               ; if there's a number left, process it
 
         popCharacters:
             ; at this point we expect a number stored in the stack in reverse 
@@ -113,28 +94,28 @@
             inc isSpace
             cmp isSpace, 2
             jne popLoopStart
-            jmp calculationStart
+            jmp popEnd
 
         popLoopStart: 
-            mov cl, counter ; number of digits
+            mov cl, counter                 ; number of digits
             xor ax, ax 
             xor dx, dx
 
         popLoop:
-            pop ax ; pop a value from the stack into dx
-            sub ax, '0' ; convert from ASCII to integer
+            pop ax                          ; pop a value from the stack into dx
+            sub ax, '0'                     ; convert from ASCII to integer
 
-            push cx ; save cx
-            push dx ; save dx
-            call powerOfTen ; multiply ax by 10 to the power of cx
-            pop dx ; restore dx
-            pop cx ; restore cx
+            push cx                         ; save cx
+            push dx                         ; save dx
+            call powerOfTen                 ; multiply ax by 10 to the power of cx
+            pop dx                          ; restore dx
+            pop cx                          ; restore cx
 
             add dx, ax
 
             inc power
 
-            loop popLoop ; decrement cx and continue looping if cx is not zero
+            loop popLoop                    ; decrement cx and continue looping if cx is not zero
 
         popLoopEnd:
             mov counter, 0
@@ -142,27 +123,30 @@
 
             call floor
 
-            cmp isNegative, 1 ; check if the number is negative
-            jne sum ; if it is not, jump to sum
+            cmp isNegative, 1               ; check if the number is negative
+            jne sum                         ; if it is not, jump to sum
             neg dx
 
         sum:
             call addToArray
 
-            mov sumHigh, 0 ;xor dx, dx
+            mov sumHigh, 0                  ;xor dx, dx
             add sumLow, dx
             adc sumHigh, 0
 
             ;add sumLow, dx ; Add dx to the low part of the sum
             ;adc sumHigh, 0 ; Add with carry to the high part of the sum
 
-            mov dx, 0 ; clear dx
-            mov isNegative, 0 ; clear the negative flag
+            mov dx, 0                       ; clear dx
+            mov isNegative, 0               ; clear the negative flag
 
             jmp inputEnd
-            ret ;!!
+
+        popEnd:
+            ret 
     input ENDP
 
+    ; if number is greater than 32767, set it to 32767 to avoid overflow
     floor proc
         cmp dx, 32767
         jno endFloor
@@ -171,6 +155,32 @@
         endFloor:
         ret
     floor endp
+
+    addToArray proc
+        lea bx, [numbers]                   ; load the address of the array into bx
+        add bx, arrayIndex                  ; add the arrayIndex to the address
+        mov [bx], dx                        ; store the number in the corresponding place in array
+        inc arrayIndex                      ; increment the arrayIndex twice because we are storing a word
+        inc arrayIndex 
+        inc totalWords
+        ret
+    addToArray endp
+    
+    powerOfTen PROC
+        powerOfTen:
+        mov cx, [power]                     ; load the power into cx
+        mov bx, 10                          ; base 10 for multiplication
+
+        cmp cx, 0                           ; if the power is 0, we don't need to do anything
+        je endPowerOfTen                    ; jump to endPowerOfTen if cx is zero
+
+        powerLoop:
+        mul bx                              ; multiply ax by 10
+            loop powerLoop                  ; decrement cx and continue looping if cx is not zero
+
+        endPowerOfTen:
+        ret                                 ; return to the caller
+    powerOfTen ENDP
 
     bubbleSort proc
         call clearAllRegisters
@@ -205,38 +215,36 @@
         ret
     clearAllRegisters endp
 
-    calculation proc
-        calculationStart:
-            ret
-    calculation endp
-
     calculateMedian proc
         call clearAllRegisters
 
         ;divide by two with right shift
         mov bx, totalWords
         mov ax, bx
-        and ax, 1
+        and ax, 1                               ; if the least significant bit is 1, the number is odd, we can also shift right by one and if carry flag is 0, the number is even
         jz evenAmount
         jnz oddAmount
 
         evenAmount:
-        shr bx, 1
-        lea si, numbers
+        shr bx, 1                               ; divide by 2
+        lea si, numbers                         ; address of the array
 
-        mov dx, [si+bx]
-        add dx, [si+bx-2]
+        mov dx, [si+bx]                         ; load the first median into dx
+        add dx, [si+bx-2]                       ; add the second median to dx
 
         jmp medianEnd
 
         oddAmount:
-        shr bx, 1
-        inc bx
+        shr bx, 1                               ; divide by 2
+        inc bx                                  ; increment bx by 1 to get the median
 
-        lea si, numbers ; address of the array
-        mov dx, [si+bx] ; load the median into dx
+        lea si, numbers                         ; address of the array
+        mov dx, [si+bx]                         ; load the median into dx
 
         medianEnd:
+        mov ax, dx
+        call decimalOutput
+
         ret
     calculateMedian endp
 
@@ -246,61 +254,69 @@
         mov dx, sumHigh
         mov ax, sumLow
         mov bx, totalWords
-        cwd ; TODO understand what this does
+        cwd ; extends the sign of ax to dx
 
         idiv bx
 
-        call StdoutDecimal
+        call decimalOutput
 
         ret
     calculateAverage endp
 
-StdoutDecimal proc
-    push ax                                  
-    push bx                                  
-    push cx                                  
-    push dx                                  
+    decimalOutput proc
+        push ax                                  
+        push bx                                  
+        push cx                                  
+        push dx                                  
 
-    test ax, ax
-    jns notNegative
+        test ax, ax                             ; check if the number is negative
+        jns notNegative
 
-    neg ax
+        neg ax                                  ; if it is, flip it
 
-    push ax
-    push dx
+        push ax                                 ; save the number
+        push dx                                 ; save the number                
 
-    mov ah, 02h
-    mov dl, '-'
-    int 21h
+        mov ah, 02h                             ; write minus first 
+        mov dl, '-'
+        int 21h
 
-    pop dx 
-    pop ax
+        pop dx                                  ; restore the number
+        pop ax
 
-notNegative:
-    mov bx, 10                               ; Дільник для перетворення у десятковий формат
-    mov cx, 0                                ; CX буде рахувати кількість цифр
+    notNegative:
+        mov bx, 10                              ; divisor
+        mov cx, 0                               ; counter
 
-divide:
-    xor dx, dx                               ; Очищення DX для DIV
-    div bx                                   ; Ділення AX на BX
-    push dx                                  ; Запис залишку (цифри) у стек
-    inc cx                                   ; Збільшуємо каунтер цифр на 1 
-    test ax, ax                              ; Перевірка чи результат ділення 0
-    jnz divide                               ; Якщо ні, продовжуємо ділення
+    divide:
+        xor dx, dx                              
+        div bx                                  
+        push dx                                 ; save the remainder on the stack
+        inc cx                                  
+        test ax, ax                             ; if the quotient is not zero, continue dividing
+        jnz divide                              ; if it is zero, the number has been divided completely
 
-print_digit:
-    pop dx                                   ; Дістаємо цифру зі стеку
-    add dl, '0'                              ; Конвертація у ASCII
-    mov ah, 02h                              ; Код функції stdout
-    int 21h                                  ; Виклик DOS переривання
-    loop print_digit                         ; Повторення поки всі цифри не будуть надруковані
+    print_digit:
+        pop dx                                  ; pop the remainder from the stack
+        add dl, '0'                             ; convert to ASCII
+        mov ah, 02h                             
+        int 21h                                 
+        loop print_digit                        ; repeat until all digits have been printed
 
-    pop dx                                   ; Відновлення регістрів
-    pop cx
-    pop bx
-    pop ax
-    ret                                      ; Повернення з підпрограми
-StdoutDecimal endp
+        pop dx                                  ; restore registers
+        pop cx
+        pop bx
+        pop ax
+        ret                                     
+    decimalOutput endp
+
+    skipLine proc
+        mov ah, 02h                             ; Function to write a character
+        mov dl, 0Ah                             ; ASCII value of newline
+        int 21h                                 ; Call DOS interrupt
+
+        ret
+    skipLine endp
 
     end main
 .bss 
