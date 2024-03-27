@@ -24,7 +24,8 @@
 
         call input
         call bubbleSort
-        call printMedian
+        call calculateMedian
+        call calculateAverage
 
     main ENDP
     
@@ -147,8 +148,13 @@
 
         sum:
             call addToArray
-            add sumLow, dx ; Add dx to the low part of the sum
-            adc sumHigh, 0 ; Add with carry to the high part of the sum
+
+            mov sumHigh, 0 ;xor dx, dx
+            add sumLow, dx
+            adc sumHigh, 0
+
+            ;add sumLow, dx ; Add dx to the low part of the sum
+            ;adc sumHigh, 0 ; Add with carry to the high part of the sum
 
             mov dx, 0 ; clear dx
             mov isNegative, 0 ; clear the negative flag
@@ -207,7 +213,7 @@
             ret
     calculation endp
 
-    printMedian proc
+    calculateMedian proc
         call clearAllRegisters
 
         ;divide by two with right shift
@@ -239,7 +245,24 @@
         int 21h
 
         ret
-    printMedian endp
+    calculateMedian endp
+
+    calculateAverage proc
+        call clearAllRegisters
+
+        mov dx, sumHigh
+        mov ax, sumLow
+        mov bx, totalWords
+        cwd ; TODO understand what this does
+
+        idiv bx
+        mov dx, ax
+
+        mov ax, 02h
+        int 21h
+
+        ret
+    calculateAverage endp
 
     end main
 .bss 
