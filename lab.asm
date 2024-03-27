@@ -22,12 +22,10 @@
         mov ax, @data
         mov ds, ax
 
-        mov ax, 455
-        call StdoutDecimal
-        ;call input
-        ;call bubbleSort
+        call input
+        call bubbleSort
         ;call calculateMedian
-        ;call calculateAverage
+        call calculateAverage
 
     main ENDP
     
@@ -239,7 +237,6 @@
         mov dx, [si+bx] ; load the median into dx
 
         medianEnd:
-        call convertAss
         ret
     calculateMedian endp
 
@@ -252,49 +249,12 @@
         cwd ; TODO understand what this does
 
         idiv bx
-        mov dx, ax
 
-        call convertAss
+        call StdoutDecimal
 
         ret
     calculateAverage endp
 
-    convertAss PROC
-        minusCheck:
-            xor cx, cx
-
-            test dx, 8000h ; check if the number is negative   
-            jz conversion
-
-            neg dx
-            push '-'
-            inc cx
-
-        conversion:
-            mov ax, dx
-            xor dx, dx
-            mov bx, 10 ; constant for division
-
-            div bx
-            add dx, '0' ; convert to ASCII
-            push dx
-            inc cx
-            test ax, ax
-            jne conversion
-
-            jmp printLoop
-        ret
-    convertAss ENDP
-
-    printAss PROC
-        printLoop:
-            xor dx, dx
-            pop dx
-            mov ah, 02h
-            int 21h
-            loop printLoop
-        ret
-    printAss ENDP
 StdoutDecimal proc
     push ax                                  
     push bx                                  
