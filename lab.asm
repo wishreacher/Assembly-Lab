@@ -4,7 +4,7 @@
 
 .data
     oneCharBuffer db 0                         ; declare oneCharBuffer as a byte variable
-    numbers dw 10 dup(2)                       ; declare array as a word variable
+    numbers dw 100 dup(2)                       ; declare array as a word variable
     arrayIndex dw 0
     counter db 0
     power dw 0
@@ -227,10 +227,15 @@
 
         evenAmount:
         shr bx, 1                               ; divide by 2
+        dec bx
         lea si, numbers                         ; address of the array
+
+        add bx, bx
 
         mov dx, [si+bx]                         ; load the first median into dx
         add dx, [si+bx+2]                       ; add the second median to dx
+
+        sub bx, bx
 
         jmp medianEnd
 
