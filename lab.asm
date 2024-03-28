@@ -21,8 +21,6 @@
         mov ax, @data
         mov ds, ax
 
-        lea si, numbers
-
         call input
         
         call bubbleSort
@@ -246,6 +244,7 @@
         shr bx, 1                               ; divide by 2
         dec bx
         lea si, numbers                         ; address of the array
+        shl bx, 1                               ; multiply bx by 2
 
         ;add bx, bx
 
