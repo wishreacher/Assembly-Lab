@@ -4,7 +4,7 @@
 
 .data
     oneCharBuffer db 0                         ; declare oneCharBuffer as a byte variable
-    numbers dw 100 dup(2)                       ; declare array as a word variable
+    numbers dw 10000 dup(?)                       ; declare array as a word variable
     arrayIndex dw 0
     counter db 0
     power dw 0
@@ -20,6 +20,8 @@
     main PROC
         mov ax, @data
         mov ds, ax
+
+        lea si, numbers
 
         call input
         
@@ -245,20 +247,21 @@
         dec bx
         lea si, numbers                         ; address of the array
 
-        add bx, bx
+        ;add bx, bx
 
         mov dx, [si+bx]                         ; load the first median into dx
         add dx, [si+bx+2]                       ; add the second median to dx
-
-        sub bx, bx
+        shr dx, 1                               ; divide by 2
+        ;sub bx, bx
 
         jmp medianEnd
 
         oddAmount:
         shr bx, 1                               ; divide by 2
-        inc bx                                  ; increment bx by 1 to get the median
+        ;inc bx                                  ; increment bx by 1 to get the median
 
         lea si, numbers                         ; address of the array
+        shl bx, 1                               ; multiply bx by 2
         mov dx, [si+bx]                         ; load the median into dx
 
         cmp dx, 0FFh
