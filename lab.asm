@@ -14,6 +14,7 @@
     sumLow dw 0                                ; Add dx to the low part of the sum
     sumHigh dw 0                               ; Add dx to the high part of the sum
     totalWords dw 0
+    overflowOccured db 0
 
 .code 
     main PROC
@@ -120,8 +121,7 @@
         popLoopEnd:
             mov counter, 0
             mov power, 0
-
-            call floor
+            mov overflowOccured, 0
 
             cmp isNegative, 1               ; check if the number is negative
             jne sum                         ; if it is not, jump to sum
@@ -146,16 +146,6 @@
             ret 
     input ENDP
 
-    ; if number is greater than 32767, set it to 32767 to avoid overflow
-    floor proc
-        cmp dx, 32767
-        jno endFloor
-        mov dx, 32767
-        
-        endFloor:
-        ret
-    floor endp
-
     addToArray proc
         lea bx, [numbers]                   ; load the address of the array into bx
         add bx, arrayIndex                  ; add the arrayIndex to the address
@@ -176,7 +166,14 @@
 
         powerLoop:
         mul bx                              ; multiply ax by 10
+            jnz hell
             loop powerLoop                  ; decrement cx and continue looping if cx is not zero
+
+        jmp endPowerOfTen
+
+        hell:
+        mov ax, 32767
+        mov overflowOccured, 1
 
         endPowerOfTen:
         ret                                 ; return to the caller
