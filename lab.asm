@@ -109,10 +109,27 @@
             push cx                         ; save cx
             push dx                         ; save dx
             call powerOfTen                 ; multiply ax by 10 to the power of cx
+            cmp overflowOccured, 1
+            jne noOverflow
+
+            pop dx 
+            pop cx
+        overflow:
+            mov dx, 32767
+            inc power
+
+            jmp popLoopEnd
+
+
+        noOverflow:
+            ;HERE WE ALSO NEED TO CHECK FOR OVERFLOW
+            ;FUCK I SPENT 4 HOURS DEBUGGING IT
             pop dx                          ; restore dx
             pop cx                          ; restore cx
 
             add dx, ax
+            cmp dx, 32767
+            ja overflow
 
             inc power
 
@@ -166,6 +183,7 @@
 
         powerLoop:
         mul bx                              ; multiply ax by 10
+            cmp dx, 0                       ; check if there was an overflow
             jnz hell
             loop powerLoop                  ; decrement cx and continue looping if cx is not zero
 
