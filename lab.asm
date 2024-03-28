@@ -230,7 +230,7 @@
         lea si, numbers                         ; address of the array
 
         mov dx, [si+bx]                         ; load the first median into dx
-        add dx, [si+bx-2]                       ; add the second median to dx
+        add dx, [si+bx+2]                       ; add the second median to dx
 
         jmp medianEnd
 
@@ -240,6 +240,10 @@
 
         lea si, numbers                         ; address of the array
         mov dx, [si+bx]                         ; load the median into dx
+
+        cmp dx, 0FFh
+        jne medianEnd
+        mov dx, 0
 
         medianEnd:
         mov ax, dx
