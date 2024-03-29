@@ -10,6 +10,7 @@
     power dw 0
     inputBuffer dw 0
     isSpace db 0
+    isNewLine db 0
     isNegative db 0
     sumLow dw 0                                ; Add dx to the low part of the sum
     sumHigh dw 0                               ; Add dx to the high part of the sum
@@ -63,13 +64,14 @@
 
         spaceChecks:
             cmp oneCharBuffer, 0Ah          ; перевірка на переривання рядка
-            je popCharacters
+            je newLine
             cmp oneCharBuffer, 0Dh          ; перевірка на переривання рядка
-            je popCharacters
+            je newLine
             cmp oneCharBuffer, 20h          ; перевірка на пробіл
             je popCharacters
 
             mov isSpace, 0
+            mov isNewLine, 0
 
             push dx                         ; if not a space, push the character onto the stack
             inc counter                     ; increment the counter
@@ -90,13 +92,21 @@
         pcJump:
             jmp popCharacters               ; if there's a number left, process it
 
+        newLine:
+            inc isNewLine
+            cmp isNewLine, 2
+            je endJumpHelper
+
+            cmp isSpace, 1
+            je inputStart
         popCharacters:
             ; at this point we expect a number stored in the stack in reverse 
             ; order, 1234 - 4321
+
             inc isSpace
             cmp isSpace, 2
             jne popLoopStart
-            jmp popEnd
+            jmp endJumpHelper
 
         popLoopStart: 
             mov cl, counter                 ; number of digits
@@ -133,7 +143,7 @@
             ja overflow
 
             inc power
-
+        nigger:
             loop popLoop                    ; decrement cx and continue looping if cx is not zero
 
         popLoopEnd:
@@ -151,8 +161,12 @@
             add sumLow, dx
             jno noOF
             add sumHigh, 1
+            jmp noOF
 
-        noOF
+        endJumpHelper:
+            jmp popEnd
+
+        noOF:
             mov cx, sumHigh
 
             cmp sumHigh, 0
@@ -294,11 +308,17 @@
         je withoutHigh
         
         withHigh:
+        cmp cx, 1
+        jb damn
         dec dx
+
+        damn:
+        ;dec dx
         div bx
         jmp decim
 
         withoutHigh:
+        dec dx
         cwd
         idiv bx
         jmp decim
