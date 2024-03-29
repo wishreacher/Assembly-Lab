@@ -4,7 +4,7 @@
 
 .data
     oneCharBuffer db 0                         ; declare oneCharBuffer as a byte variable
-    numbers dw 10000 dup(?)                       ; declare array as a word variable
+    numbers dw 10000 dup(2)                       ; declare array as a word variable
     arrayIndex dw 0
     counter db 0
     power dw 0
@@ -15,6 +15,7 @@
     sumHigh dw 0                               ; Add dx to the high part of the sum
     totalWords dw 0
     overflowOccured db 0
+    sumOverflowOccured dw 0
 
 .code 
     main PROC
@@ -147,13 +148,19 @@
         sum:
             call addToArray
 
-            mov sumHigh, 0                  ;xor dx, dx
             add sumLow, dx
-            adc sumHigh, 0
+            jno noOF
+            add sumHigh, 1
 
-            ;add sumLow, dx ; Add dx to the low part of the sum
-            ;adc sumHigh, 0 ; Add with carry to the high part of the sum
+        noOF
+            mov cx, sumHigh
 
+            cmp sumHigh, 0
+            je endSum
+
+            mov sumOverflowOccured, 1
+
+        endSum:
             mov dx, 0                       ; clear dx
             mov isNegative, 0               ; clear the negative flag
 
@@ -280,10 +287,23 @@
         mov dx, sumHigh
         mov ax, sumLow
         mov bx, totalWords
-        cwd ; extends the sign of ax to dx
+        mov cx, sumOverflowOccured
 
+        cmp cx, 0
+        jne withHigh
+        je withoutHigh
+        
+        withHigh:
+        dec dx
+        div bx
+        jmp decim
+
+        withoutHigh:
+        cwd
         idiv bx
-
+        jmp decim
+        
+        decim:
         call decimalOutput
 
         ret
