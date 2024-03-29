@@ -49,13 +49,11 @@
             int 21h
 
             or ax, ax
-            jz testicleCancer
+            jz blankInput
 
             mov inputBuffer, ax
 
-            mov ah, 02h
             mov dl, oneCharBuffer
-            int 21h
 
             cmp oneCharBuffer, '-'          ; check if the character is a minus sign
             jne spaceChecks                 ; if it is, jump to negativeNumber
@@ -77,7 +75,7 @@
             inc counter                     ; increment the counter
             jmp inputEnd
 
-        testicleCancer:
+        blankInput:
             jmp popCharacters
 
         inputEnd:
@@ -309,10 +307,10 @@
         
         withHigh:
         cmp cx, 1
-        jb damn
+        jb notworking
         dec dx
 
-        damn:
+        notworking:
         ;dec dx
         div bx
         jmp decim
